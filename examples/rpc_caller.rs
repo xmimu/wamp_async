@@ -66,7 +66,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             "Calling 'peer.echo' with {:?} and {:?}",
             send_args, send_kwargs
         );
-        match client.call("peer.echo", send_args, send_kwargs).await {
+        match client.call("peer.echo", send_args, send_kwargs, None).await {
             Ok((res_args, res_kwargs)) => {
                 println!("\tGot {:?} {:?}", res_args, res_kwargs);
                 assert_eq!(res_args, send_args_copy);

@@ -565,12 +565,17 @@ impl<'a> Client<'a> {
         uri: T,
         arguments: Option<WampArgs>,
         arguments_kw: Option<WampKwArgs>,
+        options: Option<WampDict>,
     ) -> Result<(Option<WampArgs>, Option<WampKwArgs>), WampError> {
         // Send the request
         let (res, result) = oneshot::channel();
+        let options = match options {
+            Some(o) => o,
+            None => WampDict::new(),
+        };
         if let Err(e) = self.ctl_channel.send(Request::Call {
             uri: uri.as_ref().to_string(),
-            options: WampDict::new(),
+            options,
             arguments,
             arguments_kw,
             res,

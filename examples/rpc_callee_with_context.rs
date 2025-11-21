@@ -33,7 +33,7 @@ fn echo_with_context(
                 }
                 // We can asynchronously perform any other WAMP action,
                 // e.g. recursively call ourselves.
-                wamp_client.call("peer.echo", None, None).await.unwrap();
+                wamp_client.call("peer.echo", None, None, None).await.unwrap();
 
                 Ok((args, kwargs))
             })

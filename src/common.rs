@@ -254,6 +254,59 @@ pub fn try_into_kwargs<T: Serialize>(value: T) -> Result<WampKwArgs, WampError> 
     }
 }
 
+/// Convert any serde-serializable object into WampDict
+pub fn try_into_wamp_dict<T: Serialize>(value: T) -> Result<WampDict, WampError> {
+    match serde_json::to_value(value).unwrap() {
+        serde_json::Value::Object(map) => {
+            let mut dict = WampDict::new();
+            for (k, v) in map {
+                dict.insert(k, arg_from_json(v)?);
+            }
+            Ok(dict)
+        }
+        v => Err(WampError::SerializationError(
+            crate::serializer::SerializerError::Serialization(format!(
+                "failed to serialize {:?} into WampDict",
+                v
+            )),
+        )),
+    }
+}
+
+/// Helper function: recursively convert serde_json::Value to Arg
+fn arg_from_json(value: serde_json::Value) -> Result<Arg, WampError> {
+    Ok(match value {
+        serde_json::Value::Null => Arg::None,
+        serde_json::Value::Bool(b) => Arg::Bool(b),
+        serde_json::Value::Number(n) => {
+            if let Some(i) = n.as_u64() {
+                Arg::Integer(i as usize)
+            } else {
+                return Err(WampError::SerializationError(
+                    crate::serializer::SerializerError::Serialization(
+                        "Only unsigned integers supported".to_string(),
+                    ),
+                ));
+            }
+        }
+        serde_json::Value::String(s) => Arg::String(s),
+        serde_json::Value::Array(arr) => {
+            let mut list = Vec::with_capacity(arr.len());
+            for v in arr {
+                list.push(arg_from_json(v)?);
+            }
+            Arg::List(list)
+        }
+        serde_json::Value::Object(obj) => {
+            let mut dict = WampDict::new();
+            for (k, v) in obj {
+                dict.insert(k, arg_from_json(v)?);
+            }
+            Arg::Dict(dict)
+        }
+    })
+}
+
 /// Returns whether a uri is valid or not (using strict rules)
 pub fn is_valid_strict_uri<T: AsRef<str>>(in_uri: T) -> bool {
     let uri: &str = in_uri.as_ref();
