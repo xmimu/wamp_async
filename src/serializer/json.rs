@@ -1,6 +1,5 @@
 use crate::message::*;
 use crate::serializer::*;
-pub use serde_json::error::Error;
 use serde_json::{from_slice, to_vec};
 
 pub struct JsonSerializer {}
