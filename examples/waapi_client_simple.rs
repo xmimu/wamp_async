@@ -9,13 +9,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Create and connect to WAAPI server with simplified API
     println!("Connecting to WAAPI server...");
     let mut client = WaapiClient::builder()
-        .host("localhost")
-        .port(8080)
-        .ssl_verify(false)
+        // .host("localhost")
+        // .port(8080)
         .connect()
         .await?;
 
-    println!("Connected to realm: {}", client.realm());
+    println!("Connected successfully!");
 
     // Call WAAPI to get all Event objects
     println!("\nCalling ak.wwise.core.object.get...");

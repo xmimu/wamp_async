@@ -17,8 +17,6 @@ impl WaapiClientBuilder {
     /// Default values:
     /// - host: "localhost"
     /// - port: 8080
-    /// - realm: "realm1"
-    /// - ssl_verify: false
     pub fn new() -> Self {
         Self {
             host: "localhost".to_string(),
@@ -37,18 +35,6 @@ impl WaapiClientBuilder {
     /// Set the WAAPI server port
     pub fn port(mut self, port: u16) -> Self {
         self.port = port;
-        self
-    }
-
-    /// Set the realm name
-    pub fn realm(mut self, realm: impl Into<String>) -> Self {
-        self.realm = realm.into();
-        self
-    }
-
-    /// Set whether to verify SSL certificates
-    pub fn ssl_verify(mut self, verify: bool) -> Self {
-        self.ssl_verify = verify;
         self
     }
 
@@ -86,10 +72,7 @@ impl WaapiClientBuilder {
             .await
             .map_err(WaapiError::JoinRealmFailed)?;
 
-        Ok(WaapiClient {
-            client,
-            realm: self.realm,
-        })
+        Ok(WaapiClient { client })
     }
 }
 
@@ -102,7 +85,6 @@ impl Default for WaapiClientBuilder {
 /// A simplified WAAPI client that manages connection lifecycle automatically
 pub struct WaapiClient {
     client: Client<'static>,
-    realm: String,
 }
 
 impl WaapiClient {
@@ -196,11 +178,6 @@ impl WaapiClient {
     /// Check if the client is connected
     pub fn is_connected(&mut self) -> bool {
         self.client.is_connected()
-    }
-
-    /// Get the realm name this client is connected to
-    pub fn realm(&self) -> &str {
-        &self.realm
     }
 
     /// Close the connection gracefully

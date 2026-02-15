@@ -96,11 +96,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut client = WaapiClient::builder()
         .host("localhost")
         .port(8080)
-        .ssl_verify(false)
         .connect()
         .await?;
 
-    println!("Connected to realm: {}", client.realm());
+    println!("Connected successfully!");
 
     // 2. 直接调用（自动转换参数，返回 JSON Value）
     println!("\nCalling ak.wwise.core.object.get...");
@@ -183,8 +182,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 WaapiClient::builder()
     .host("localhost")        // WAAPI 服务器地址 (默认: "localhost")
     .port(8080)               // WAAPI 服务器端口 (默认: 8080)
-    .realm("realm1")          // Realm 名称 (默认: "realm1")
-    .ssl_verify(false)        // SSL 证书验证 (默认: false)
     .connect()
     .await?
 ```
