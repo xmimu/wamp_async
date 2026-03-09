@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::fmt;
 use std::future::Future;
 use std::hash::Hash;
@@ -74,6 +75,8 @@ pub enum Arg {
     Id(WampId),
     /// integer: a non-negative integer
     Integer(WampInteger),
+    /// float: a floating-point number
+    Float(f64),
     /// string: a Unicode string, including the empty string
     String(WampString),
     /// bool: a boolean value (true or false)
@@ -280,28 +283,35 @@ fn arg_from_json(value: serde_json::Value) -> Result<Arg, WampError> {
         serde_json::Value::Bool(b) => Arg::Bool(b),
         serde_json::Value::Number(n) => {
             if let Some(i) = n.as_u64() {
-                Arg::Integer(i as usize)
+                let val = usize::try_from(i).map_err(|_| {
+                    WampError::SerializationError(
+                        crate::serializer::SerializerError::Deserialization(format!(
+                            "integer {} overflows usize on this platform",
+                            i
+                        )),
+                    )
+                })?;
+                Arg::Integer(val)
+            } else if let Some(f) = n.as_f64() {
+                Arg::Float(f)
             } else {
                 return Err(WampError::SerializationError(
-                    crate::serializer::SerializerError::Serialization(
-                        "Only unsigned integers supported".to_string(),
-                    ),
+                    crate::serializer::SerializerError::Deserialization(format!(
+                        "unsupported JSON number: {}",
+                        n
+                    )),
                 ));
             }
         }
         serde_json::Value::String(s) => Arg::String(s),
         serde_json::Value::Array(arr) => {
-            let mut list = Vec::with_capacity(arr.len());
-            for v in arr {
-                list.push(arg_from_json(v)?);
-            }
-            Arg::List(list)
+            Arg::List(arr.into_iter().map(arg_from_json).collect::<Result<_, _>>()?)
         }
         serde_json::Value::Object(obj) => {
-            let mut dict = WampDict::new();
-            for (k, v) in obj {
-                dict.insert(k, arg_from_json(v)?);
-            }
+            let dict = obj
+                .into_iter()
+                .map(|(k, v)| arg_from_json(v).map(|arg| (k, arg)))
+                .collect::<Result<WampDict, _>>()?;
             Arg::Dict(dict)
         }
     })
